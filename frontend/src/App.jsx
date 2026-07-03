@@ -42,6 +42,62 @@ import './App.css';
 
 const API_BASE = 'http://localhost:8000';
 
+// Custom Sankey node rendering component with colors and labels
+const DemoSankeyNode = ({ x, y, width, height, index, payload, containerWidth }) => {
+  const isRightHalf = x > containerWidth / 2;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={payload.color || '#5b73e8'}
+        fillOpacity={0.85}
+        rx={4}
+        stroke="#fff"
+        strokeWidth={1}
+      />
+      <text
+        x={isRightHalf ? x - 8 : x + width + 8}
+        y={y + height / 2}
+        textAnchor={isRightHalf ? 'end' : 'start'}
+        dominantBaseline="middle"
+        fill="#2d3748"
+        fontSize="11"
+        fontWeight="600"
+      >
+        {payload.name}
+      </text>
+    </g>
+  );
+};
+
+// Custom Sankey link rendering component matching source node color
+const DemoSankeyLink = ({ sourceX, sourceY, targetX, targetY, sy, ty, width, payload }) => {
+  const color = payload.source.color || '#b3c5ff';
+  return (
+    <path
+      d={`
+        M${sourceX},${sourceY + sy}
+        C${(sourceX + targetX) / 2},${sourceY + sy}
+         ${(sourceX + targetX) / 2},${targetY + ty}
+         ${targetX},${targetY + ty}
+        L${targetX},${targetY + ty + width}
+        C${(sourceX + targetX) / 2},${targetY + ty + width}
+         ${(sourceX + targetX) / 2},${sourceY + sy + width}
+         ${sourceX},${sourceY + sy + width}
+        Z
+      `}
+      fill={color}
+      fillOpacity={0.15}
+      stroke={color}
+      strokeOpacity={0.25}
+      strokeWidth={0.5}
+    />
+  );
+};
+
 function App() {
   const dispatch = useDispatch();
   const {
@@ -203,14 +259,14 @@ function App() {
 
     // Nodes
     const nodes = [
-      { name: "Chiffre d'Affaires" },               // 0
-      { name: "Marge Brute" },                      // 1
-      { name: "Coût des Ventes (Achats & Stocks)" },// 2
-      { name: "EBIT (Résultat d'Exploitation)" },   // 3
-      { name: "Charges d'Exploitation" },          // 4
-      { name: "Résultat Net (Bénéfice)" },          // 5
-      { name: "Charges Financières & Impôts" },     // 6
-      { name: "Perte Nette" }                       // 7
+      { name: "Chiffre d'Affaires", color: "#5b73e8" },               // 0
+      { name: "Marge Brute", color: "#b3c5ff" },                      // 1
+      { name: "Coût des Ventes (Achats & Stocks)", color: "#ffb3c1" },// 2
+      { name: "EBIT (Résultat d'Exploitation)", color: "#d1b3ff" },   // 3
+      { name: "Charges d'Exploitation", color: "#ffd6cc" },          // 4
+      { name: "Résultat Net (Bénéfice)", color: "#a3e2bc" },          // 5
+      { name: "Charges Financières & Impôts", color: "#ffc8b3" },     // 6
+      { name: "Perte Nette", color: "#ff8080" }                       // 7
     ];
 
     const links = [];
@@ -269,7 +325,8 @@ function App() {
         }
       }
       return {
-        name: `${node.name} (${totalVal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €)`
+        name: `${node.name} (${totalVal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €)`,
+        color: node.color
       };
     });
 
@@ -520,8 +577,9 @@ function App() {
                     <ResponsiveContainer width="100%" height={320}>
                       <Sankey
                         data={sankeyData}
-                        node={{ fill: '#b3c5ff', stroke: '#5b73e8', strokeWidth: 1 }}
-                        link={{ stroke: '#ffd5dc' }}
+                        node={DemoSankeyNode}
+                        link={DemoSankeyLink}
+                        margin={{ left: 15, right: 220, top: 20, bottom: 20 }}
                       >
                         <Tooltip />
                       </Sankey>
