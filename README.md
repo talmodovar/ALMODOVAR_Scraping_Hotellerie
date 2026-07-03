@@ -1,5 +1,7 @@
 # Pipeline BCE Big Data & Ingestion Hotellerie
 
+🔗 **Repository GitHub** : [talmodovar/ALMODOVAR_Scraping_Hotellerie](https://github.com/talmodovar/ALMODOVAR_Scraping_Hotellerie)
+
 Ce projet met en place un pipeline de données Big Data conteneurisé sous Docker pour ingérer, nettoyer, croiser et analyser les données d'entreprises de la BCE (Banque-Carrefour des Entreprises) ainsi que les dépôts financiers de la Banque Nationale de Belgique (NBB) sur le secteur hôtelier.
 
 ---
@@ -122,8 +124,10 @@ python "./ingestion/strapor.py"
 
 ---
 
-## 📊 Interfaces d'Administration
+## 📊 Interfaces d'Administration et Applications
 Une fois le pipeline démarré, vous pouvez accéder aux services aux adresses suivantes :
+*   **Application Frontend (React/Vite)** : [http://localhost:5173](http://localhost:5173) *(nécessite d'être lancé localement via `npm run dev` dans le dossier `./frontend`)*
+*   **API Backend (FastAPI)** : [http://localhost:8000](http://localhost:8000) (Documentation Swagger : [http://localhost:8000/docs](http://localhost:8000/docs))
 *   **Airflow Orchestrator UI** : [http://localhost:8082](http://localhost:8082) (Identifiants: `admin` / `admin`)
 *   **Mongo Express Web UI** : [http://localhost:8081](http://localhost:8081) (Identifiants: `admin` / `admin`)
 *   **HDFS Hadoop NameNode UI** : [http://localhost:9870](http://localhost:9870)

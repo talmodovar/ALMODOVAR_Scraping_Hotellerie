@@ -37,15 +37,8 @@ MONGO_STATE_URI = os.getenv("MONGO_STATE_URI", "mongodb://localhost:27018/")
 MONGO_STATE_DB = os.getenv("MONGO_STATE_DB", "bce_state_db")
 
 # Proxy Pool SOCKS5 internally inside Docker Network (with fallback to localhost/no proxy if running locally outside Docker)
-PROXY_POOL = [
-    "socks5://localhost:9050",
-    "socks5://localhost:9052",
-    "socks5://localhost:9054",
-    "socks5://localhost:9056",
-    "socks5://localhost:9058",
-    "socks5://localhost:9060"
-]
-if "mongo" in MONGO_URI:
+PROXY_POOL = []
+if "mongo:" in MONGO_URI:
     PROXY_POOL = [
         "socks5://tor1:9050",
         "socks5://tor2:9050",
@@ -58,10 +51,14 @@ if "mongo" in MONGO_URI:
 current_proxy_idx = 0
 
 def get_current_proxy():
+    if not PROXY_POOL:
+        return None
     return PROXY_POOL[current_proxy_idx]
 
 def rotate_proxy():
     global current_proxy_idx
+    if not PROXY_POOL:
+        return
     old_proxy = PROXY_POOL[current_proxy_idx]
     current_proxy_idx = (current_proxy_idx + 1) % len(PROXY_POOL)
     log.info(f"Rotating proxy: {old_proxy} -> {PROXY_POOL[current_proxy_idx]}")
@@ -114,8 +111,10 @@ def _fetch_cookies_via_playwright() -> list[dict]:
 def _build_session(cookies: list[dict]) -> requests.Session:
     session = requests.Session()
     session.headers.update(HEADERS_API)
-    proxy_server = get_current_proxy().replace("socks5://", "socks5h://") # Use socks5h for requests
-    session.proxies = {"http": proxy_server, "https": proxy_server}
+    proxy_server = get_current_proxy()
+    if proxy_server:
+        proxy_server = proxy_server.replace("socks5://", "socks5h://") # Use socks5h for requests
+        session.proxies = {"http": proxy_server, "https": proxy_server}
     
     for c in cookies:
         session.cookies.set(c["name"], c["value"], domain=c["domain"])

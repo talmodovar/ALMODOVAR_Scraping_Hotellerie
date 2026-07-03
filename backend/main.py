@@ -170,16 +170,6 @@ def read_root():
 @app.get("/api/enterprises/search")
 def search_enterprises(q: str = Query(..., min_length=2, description="Name or BCE number of the enterprise")):
     q = q.strip()
-    
-    # Fetch all enterprise numbers with gold data
-    gold_numbers = []
-    for doc in db["hotel_gold"].find({}, {"enterprise_number": 1}):
-        num = doc.get("enterprise_number")
-        if num:
-            gold_numbers.append(num)
-            clean_num = num.replace(".", "").strip()
-            if clean_num != num:
-                gold_numbers.append(clean_num)
                 
     # 1. Check if the query looks like a BCE number
     nace_hotels = ["55100", "55201", "55202", "55203", "55204", "55209", "55300", "55400", "55900"]
@@ -192,7 +182,6 @@ def search_enterprises(q: str = Query(..., min_length=2, description="Name or BC
         query_filter = {
             "$and": [
                 {"EnterpriseNumber": {"$regex": f".*{normalized}.*"}},
-                {"EnterpriseNumber": {"$in": gold_numbers}},
                 {"activities.NaceCode": {"$in": nace_hotels + nace_hotels_int}}
             ]
         }
@@ -201,7 +190,6 @@ def search_enterprises(q: str = Query(..., min_length=2, description="Name or BC
         query_filter = {
             "$and": [
                 {"$text": {"$search": q}},
-                {"EnterpriseNumber": {"$in": gold_numbers}},
                 {"activities.NaceCode": {"$in": nace_hotels + nace_hotels_int}}
             ]
         }
@@ -226,7 +214,6 @@ def search_enterprises(q: str = Query(..., min_length=2, description="Name or BC
             regex_filter = {
                 "$and": [
                     {"denominations.Denomination": {"$regex": q, "$options": "i"}},
-                    {"EnterpriseNumber": {"$in": gold_numbers}},
                     {"activities.NaceCode": {"$in": nace_hotels + nace_hotels_int}}
                 ]
             }
@@ -235,6 +222,17 @@ def search_enterprises(q: str = Query(..., min_length=2, description="Name or BC
         return [clean_nan_values(r) for r in results]
     except Exception as e:
         logger.error(f"Search failed: {e}")
+        # Try fallback immediately if text search fails due to missing index
+        if len(digits) < 5:
+            regex_filter = {
+                "$and": [
+                    {"denominations.Denomination": {"$regex": q, "$options": "i"}},
+                    {"activities.NaceCode": {"$in": nace_hotels + nace_hotels_int}}
+                ]
+            }
+            results = list(db["enterprise_silver"].find(regex_filter, projection).limit(50))
+            return [clean_nan_values(r) for r in results]
+            
         raise HTTPException(status_code=500, detail="Database search operation failed")
 
 
