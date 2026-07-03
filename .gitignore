@@ -1,0 +1,45 @@
+# Git Ignore file
+
+# Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.env
+.venv
+poetry.lock
+pipfile
+pipfile.lock
+
+# Node / JS
+node_modules/
+dist/
+.eslintcache
+.stylelintcache
+*.local
+.npm
+.eslintcache
+
+# Logs and databases
+logs/
+*.log
+*.sqlite
+db.sqlite3
+
+# Large Data directories
+data/
+tmp/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Sensitive credentials
+notaire_cookies.json
+*.json.bak
+.agents/

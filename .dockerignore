@@ -1,0 +1,11 @@
+data/
+logs/
+tmp/
+.git/
+.idea/
+.vscode/
+.agents/
+.gemini/
+__pycache__/
+*.pyc
+*.pyo
