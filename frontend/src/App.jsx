@@ -190,18 +190,92 @@ function App() {
 
     const ca = Math.max(0, yearData.ca || 0);
     const mb = Math.max(0, yearData.marge_brute || 0);
-    const rn = Math.max(0, yearData.resultat_net || 0);
+    const ebit = yearData.ebit || 0;
+    const rn = yearData.resultat_net || 0;
+
+    // Build balanced Sankey Flow
+    const costOfSales = Math.max(0, ca - mb);
+    const ebitPos = Math.max(0, ebit);
+    const opex = Math.max(0, mb - ebitPos);
+    const netProfitPos = Math.max(0, rn);
+    const netLoss = rn < 0 ? Math.abs(rn) : 0;
+    const taxFin = Math.max(0, ebitPos - netProfitPos - netLoss);
+
+    // Nodes
+    const nodes = [
+      { name: "Chiffre d'Affaires" },               // 0
+      { name: "Marge Brute" },                      // 1
+      { name: "Coût des Ventes (Achats & Stocks)" },// 2
+      { name: "EBIT (Résultat d'Exploitation)" },   // 3
+      { name: "Charges d'Exploitation" },          // 4
+      { name: "Résultat Net (Bénéfice)" },          // 5
+      { name: "Charges Financières & Impôts" },     // 6
+      { name: "Perte Nette" }                       // 7
+    ];
+
+    const links = [];
+
+    // Flow 1: CA -> Marge Brute
+    if (mb > 0) {
+      links.push({ source: 0, target: 1, value: mb });
+    }
+    // Flow 2: CA -> Coût des Ventes
+    if (costOfSales > 0) {
+      links.push({ source: 0, target: 2, value: costOfSales });
+    }
+
+    // Flow 3: Marge Brute -> EBIT
+    if (ebitPos > 0) {
+      links.push({ source: 1, target: 3, value: ebitPos });
+    }
+    // Flow 4: Marge Brute -> Charges d'Exploitation (opex)
+    if (opex > 0) {
+      links.push({ source: 1, target: 4, value: opex });
+    }
+
+    // Flow 5: EBIT -> Résultat Net
+    if (netProfitPos > 0) {
+      links.push({ source: 3, target: 5, value: netProfitPos });
+    }
+    // Flow 6: EBIT -> Charges Financières & Impôts
+    if (taxFin > 0) {
+      links.push({ source: 3, target: 6, value: taxFin });
+    }
+    // Flow 7: EBIT -> Perte Nette (or if EBIT itself was negative/loss)
+    if (netLoss > 0) {
+      if (ebitPos > 0) {
+        links.push({ source: 3, target: 7, value: netLoss });
+      } else {
+        links.push({ source: 1, target: 7, value: netLoss });
+      }
+    }
+
+    // Filter out 0 value links or invalid links to avoid Recharts errors
+    const validLinks = links.filter(l => l.value > 0);
+
+    // Format node names with values for the display labels
+    const formattedNodes = nodes.map((node, index) => {
+      let totalVal = 0;
+      if (index === 0) {
+        totalVal = ca;
+      } else {
+        totalVal = validLinks
+          .filter(l => l.target === index)
+          .reduce((sum, l) => sum + l.value, 0);
+        if (totalVal === 0) {
+          totalVal = validLinks
+            .filter(l => l.source === index)
+            .reduce((sum, l) => sum + l.value, 0);
+        }
+      }
+      return {
+        name: `${node.name} (${totalVal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €)`
+      };
+    });
 
     return {
-      nodes: [
-        { name: `Chiffre d'Affaires (${ca.toLocaleString()} €)` },
-        { name: `Marge Brute (${mb.toLocaleString()} €)` },
-        { name: `Résultat Net (${rn.toLocaleString()} €)` }
-      ],
-      links: [
-        { source: 0, target: 1, value: Math.max(1, mb) },
-        { source: 1, target: 2, value: Math.max(1, rn) }
-      ]
+      nodes: formattedNodes,
+      links: validLinks
     };
   };
 
@@ -443,7 +517,7 @@ function App() {
 
                 {sankeyData ? (
                   <div className="sankey-container">
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={320}>
                       <Sankey
                         data={sankeyData}
                         node={{ fill: '#b3c5ff', stroke: '#5b73e8', strokeWidth: 1 }}
