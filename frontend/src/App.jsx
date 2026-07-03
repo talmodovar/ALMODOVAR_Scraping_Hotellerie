@@ -443,15 +443,15 @@ function App() {
 
                 {sankeyData ? (
                   <div className="sankey-container">
-                    <Sankey
-                      width={550}
-                      height={200}
-                      data={sankeyData}
-                      node={{ fill: '#b3c5ff', stroke: '#5b73e8', strokeWidth: 1 }}
-                      link={{ stroke: '#ffd5dc' }}
-                    >
-                      <Tooltip />
-                    </Sankey>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <Sankey
+                        data={sankeyData}
+                        node={{ fill: '#b3c5ff', stroke: '#5b73e8', strokeWidth: 1 }}
+                        link={{ stroke: '#ffd5dc' }}
+                      >
+                        <Tooltip />
+                      </Sankey>
+                    </ResponsiveContainer>
                   </div>
                 ) : (
                   <p style={{ color: 'var(--text-light)', margin: 0 }}>Aucune donnée comptable pour cette année.</p>
@@ -467,7 +467,7 @@ function App() {
                   const yrData = activeEnterprise.gold_data.years.find(y => y.year === selectedYear);
                   if (!yrData) return <p style={{ color: 'var(--text-light)', margin: 0 }}>Aucune donnée disponible</p>;
                   return (
-                    <div className="info-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div className="info-grid">
                       <div className="info-item">
                         <span className="info-label">Chiffre d'Affaires</span>
                         <span className="info-val">{yrData.ca !== undefined && yrData.ca !== null ? `${yrData.ca.toLocaleString()} €` : 'N/C'}</span>

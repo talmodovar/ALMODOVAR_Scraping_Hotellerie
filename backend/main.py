@@ -45,11 +45,19 @@ MONGO_DB = os.getenv("MONGO_DB", "bce_db")
 MONGO_STATE_URI = os.getenv("MONGO_STATE_URI", "mongodb://localhost:27018/")
 MONGO_STATE_DB = os.getenv("MONGO_STATE_DB", "bce_state_db")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client[MONGO_DB]
 
-state_client = MongoClient(MONGO_STATE_URI)
-state_db = state_client[MONGO_STATE_DB]
+try:
+    state_client = MongoClient(MONGO_STATE_URI, serverSelectionTimeoutMS=3000)
+    state_db = state_client[MONGO_STATE_DB]
+    # Force ping to detect connection failure early
+    state_client.admin.command('ping')
+    logger.info("Connected to state MongoDB.")
+except Exception as e:
+    logger.warning(f"Could not connect to state MongoDB ({MONGO_STATE_URI}): {e}. Statutes streaming may be unavailable.")
+    state_client = None
+    state_db = None
 
 # Proxy Pool SOCKS5 internally inside Docker Network vs Localhost
 PROXY_POOL = [
@@ -160,6 +168,34 @@ def scrape_directors_from_kbopub(cleaned_bce: str) -> list:
             
     logger.error("All proxies failed to crawl kbopub. Returning empty list.")
     return []
+
+
+
+@app.on_event("startup")
+def create_indexes():
+    """Ensure required MongoDB indexes exist for fast search."""
+    try:
+        col = db["enterprise_silver"]
+        existing = col.index_information()
+        
+        # Text index for name search (denominations.Denomination)
+        if not any("text" in str(v.get("key")) for v in existing.values()):
+            col.create_index([("denominations.Denomination", "text")], name="denomination_text")
+            logger.info("Created text index on denomination.")
+        
+        # Index on NaceCode for activity filter
+        if "activities.NaceCode_1" not in existing:
+            col.create_index([("activities.NaceCode", 1)], name="activities.NaceCode_1")
+            logger.info("Created index on activities.NaceCode.")
+
+        # Index on EnterpriseNumber for fast lookup
+        if "EnterpriseNumber_1" not in existing:
+            col.create_index([("EnterpriseNumber", 1)], name="EnterpriseNumber_1")
+            logger.info("Created index on EnterpriseNumber.")
+            
+        logger.info("MongoDB indexes verified.")
+    except Exception as e:
+        logger.warning(f"Could not create indexes: {e}")
 
 
 @app.get("/")

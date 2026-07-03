@@ -197,74 +197,62 @@ services:
 
   # ── Tor proxies (pool anti-429) ───────────────────────────────────────────
   tor1:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor1
     restart: unless-stopped
     ports:
       - "9050:9050"
       - "9051:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
   tor2:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor2
     restart: unless-stopped
     ports:
       - "9052:9050"
       - "9053:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
   tor3:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor3
     restart: unless-stopped
     ports:
       - "9054:9050"
       - "9055:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
   tor4:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor4
     restart: unless-stopped
     ports:
       - "9056:9050"
       - "9057:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
   tor5:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor5
     restart: unless-stopped
     ports:
       - "9058:9050"
       - "9059:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
   tor6:
-    image: dperson/torproxy
+    image: peterdavehello/tor-socks-proxy:latest
     container_name: tor6
     restart: unless-stopped
     ports:
       - "9060:9050"
       - "9061:9051"
-    volumes:
-      - ./torrc:/etc/tor/torrc:ro
     networks:
       - bce_network
 
@@ -344,6 +332,8 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017/
       MONGO_DB: bce_db
+      MONGO_STATE_URI: mongodb://mongo_state:27017/
+      MONGO_STATE_DB: bce_state_db
     volumes:
       - ./backend:/app/backend
       - ./ingestion:/app/ingestion

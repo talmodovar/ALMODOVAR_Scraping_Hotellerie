@@ -39,12 +39,12 @@ PROXY_POOL = [
 ]
 if "mongo" in MONGO_URI:
     PROXY_POOL = [
-        "socks5h://tor1:9050",
-        "socks5h://tor2:9050",
-        "socks5h://tor3:9050",
-        "socks5h://tor4:9050",
-        "socks5h://tor5:9050",
-        "socks5h://tor6:9050"
+        "socks5h://tor1:9150",
+        "socks5h://tor2:9150",
+        "socks5h://tor3:9150",
+        "socks5h://tor4:9150",
+        "socks5h://tor5:9150",
+        "socks5h://tor6:9150",
     ]
 
 current_proxy_idx = 0
